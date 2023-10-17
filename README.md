@@ -29,10 +29,13 @@ The code consists of three lua scripts:
 * server part (template)
 * client part
 
-**User-provided script** must contain implementations of three functions: 
+### User-provided script
+It must contain implementations of three functions: 
 * `init()` will be called to initialize empty state. Return empty accumulator, usually a table.
 * `map(keys)` will be called with a range of keys and should return accumulator
 * `reduce(acc, result)` will be used to combine accumulator with new result and should return new accumulator.  
+
+**Note:** `reduce` is happening both at the server (between scans) and client (between server script invocations). It allows a tradeoff between scanning the whole server during one server script execution (which may take too long) and executing it too many times (making many requests and sending lots of data over the network). Use `max_scans` to adjust how many scans are performed during one server script execution.
 
 A special subset of Lua must be used:
 * no global variables
@@ -42,10 +45,11 @@ For more specific cases you can add the following declarations to the user scrip
 * function `scan_should_stop` implemented to abort scan and return intermediate results based on some condition.
 * string `scan_type` to filter only specific key types (ie, only hash sets)
 * string `scan_match` to filter keys by pattern
-* function `finish(result)` can be 
+* function `finish(result)` can be implemented to process resulting accumulator after the scan finishes. It is only executed locally, so it is possible to import any installed libraries (for example, save output in json or csv).
 
-**Server script** is constructed by combining user-provided script with server template. During one execution of server script up to `max_scans` are performed with `keys_per_scan` keys each. Next offset and reduced result are returned to the client.
+### Server script
+It is constructed by combining user-provided script with server template. During one execution of server script up to `max_scans` are performed with `keys_per_scan` keys each. Next offset and reduced result are returned to the client.
 
-**Client script** constructs the server script and uploads it to all hosts. Then it executes server script multiple times, until offset reaches zero and scan is finished. 
+### Client script
+It constructs the server script and uploads it to all hosts. Then it executes server script multiple times, until offset reaches zero and scan is finished. If `finish` is defined, the client script will execute it after the scan is finished.
 
-Note: `reduce` is happening both at the server (between scans) and client (between server script invocations). It allows a tradeoff between scanning the whole server during one server script execution (which may take too long) and executing it too many times (for every few thousand keys). Use `max_scans` to adjust how many scans are performed during one server script execution.
