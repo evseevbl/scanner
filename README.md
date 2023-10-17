@@ -42,7 +42,7 @@ A special subset of Lua must be used:
 * only a few builtin [libraries](https://redis.io/docs/interact/programmability/lua-api/#runtime-libraries) are available
 
 For more specific cases you can add the following declarations to the user script:
-* function `scan_should_stop` implemented to abort scan and return intermediate results based on some condition.
+* function `should_stop` implemented to abort scan and return intermediate results based on some condition.
 * string `scan_type` to filter only specific key types (ie, only hash sets)
 * string `scan_match` to filter keys by pattern
 * function `finish(result)` can be implemented to process resulting accumulator after the scan finishes. It is only executed locally, so it is possible to import any installed libraries (for example, save output in json or csv).
